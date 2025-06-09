@@ -1,0 +1,59 @@
+### API Documentation with MkDocs
+
+**mkdocs.yml**
+```yaml
+site_name: Task Manager CLI Documentation
+site_description: A simple command-line task management tool
+site_author: Timothy Kimutai
+site_url: https://timothykimutai.github.io/task-manager
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - search.highlight
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+
+nav:
+  - Home: index.md
+  - User Guide:
+    - Installation: user-guide/installation.md
+    - Quick Start: user-guide/quickstart.md
+    - Commands: user-guide/commands.md
+  - API Reference:
+    - Models: api/models.md
+    - Storage: api/storage.md
+    - CLI: api/cli.md
+  - Development:
+    - Contributing: development/contributing.md
+    - Testing: development/testing.md
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - toc:
+      permalink: true

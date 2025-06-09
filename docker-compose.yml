@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  task-manager:
+    build: .
+    volumes:
+      - task_data:/data
+    environment:
+      - TASK_DATA_FILE=/data/tasks.json
+    stdin_open: true
+    tty: true
+
+volumes:
+  task_data:
