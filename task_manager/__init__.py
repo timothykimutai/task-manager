@@ -3,7 +3,7 @@
 A simple command-line task management application.
 """
 
-__version__ = "0.1.0"
+__version__ = "1.2.3"
 __author__ = "Timothy Kimutai"
 __email__ = "timothykimtai@gmail.com"
 

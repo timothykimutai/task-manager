@@ -1,0 +1,42 @@
+name: Version Bump
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'New version (e.g., 1.2.3)'
+        required: true
+        type: string
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Bump version
+        run: |
+          python scripts/version.py ${{ github.event.inputs.version }}
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: bump version to ${{ github.event.inputs.version }}"
+          title: "Bump version to ${{ github.event.inputs.version }}"
+          body: |
+            This PR bumps the version to ${{ github.event.inputs.version }}.
+            
+            Changes:
+            - Updated version in __init__.py
+            - Updated CHANGELOG.md
+            - Generated release notes
+          branch: version-bump-${{ github.event.inputs.version }}
+          base: main 

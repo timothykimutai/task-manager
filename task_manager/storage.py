@@ -1,9 +1,11 @@
 """Data storage and persistence layer."""
 
 import json
+import csv
 import logging
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, TextIO
+from datetime import datetime
 from .models import Task, TaskStatus, Priority
 
 
@@ -81,3 +83,103 @@ class TaskStorage:
         except (IOError, OSError) as e:
             logger.error(f"Failed to create backup: {e}")
             return None
+
+    def export_to_json(self, file_path: Path) -> None:
+        """
+        Export tasks to a JSON file.
+
+        Args:
+            file_path: Path to export file
+        """
+        try:
+            tasks = self.load_tasks()
+            data = [task.to_dict() for task in tasks]
+            with open(file_path, "w") as f:
+                json.dump(data, f, indent=2)
+            logger.info(f"Exported {len(tasks)} tasks to {file_path}")
+        except (IOError, OSError) as e:
+            error_msg = f"Failed to export tasks: {e}"
+            logger.error(error_msg)
+            raise TaskStorageError(error_msg) from e
+
+    def import_from_json(self, file_path: Path) -> List[Task]:
+        """
+        Import tasks from a JSON file.
+
+        Args:
+            file_path: Path to import file
+
+        Returns:
+            List of imported tasks
+        """
+        try:
+            with open(file_path, "r") as f:
+                data = json.load(f)
+            tasks = [Task.from_dict(task_data) for task_data in data]
+            logger.info(f"Imported {len(tasks)} tasks from {file_path}")
+            return tasks
+        except json.JSONDecodeError as e:
+            error_msg = f"Invalid JSON in import file: {e}"
+            logger.error(error_msg)
+            raise TaskStorageError(error_msg) from e
+        except (IOError, OSError) as e:
+            error_msg = f"Failed to import tasks: {e}"
+            logger.error(error_msg)
+            raise TaskStorageError(error_msg) from e
+
+    def export_to_csv(self, file_path: Path) -> None:
+        """
+        Export tasks to a CSV file.
+
+        Args:
+            file_path: Path to export file
+        """
+        try:
+            tasks = self.load_tasks()
+            with open(file_path, "w", newline="") as f:
+                writer = csv.DictWriter(f, fieldnames=[
+                    "id", "title", "description", "status", "priority",
+                    "category", "tags", "due_date", "reminder",
+                    "created_at", "completed_at"
+                ])
+                writer.writeheader()
+                for task in tasks:
+                    data = task.to_dict()
+                    data["tags"] = ",".join(data["tags"])
+                    writer.writerow(data)
+            logger.info(f"Exported {len(tasks)} tasks to {file_path}")
+        except (IOError, OSError) as e:
+            error_msg = f"Failed to export tasks: {e}"
+            logger.error(error_msg)
+            raise TaskStorageError(error_msg) from e
+
+    def import_from_csv(self, file_path: Path) -> List[Task]:
+        """
+        Import tasks from a CSV file.
+
+        Args:
+            file_path: Path to import file
+
+        Returns:
+            List of imported tasks
+        """
+        try:
+            tasks = []
+            with open(file_path, "r", newline="") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    # Convert tags string back to list
+                    row["tags"] = row["tags"].split(",") if row["tags"] else []
+                    # Convert datetime strings
+                    for field in ["due_date", "reminder", "created_at", "completed_at"]:
+                        if row[field]:
+                            row[field] = datetime.fromisoformat(row[field])
+                        else:
+                            row[field] = None
+                    tasks.append(Task.from_dict(row))
+            logger.info(f"Imported {len(tasks)} tasks from {file_path}")
+            return tasks
+        except (IOError, OSError) as e:
+            error_msg = f"Failed to import tasks: {e}"
+            logger.error(error_msg)
+            raise TaskStorageError(error_msg) from e

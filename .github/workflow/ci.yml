@@ -97,22 +97,26 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
     
+    - name: Extract metadata for Docker
+      id: meta
+      uses: docker/metadata-action@v4
+      with:
+        images: ${{ secrets.DOCKERHUB_USERNAME }}/task-manager
+        tags: |
+          type=raw,value=latest,enable={{is_default_branch}}
+          type=sha,format=short
+    
     - name: Build and push
       uses: docker/build-push-action@v4
       with:
         context: .
         push: true
-        tags: |
-          yourusername/task-manager:latest
-          yourusername/task-manager:${{ github.sha }}
-
-    - name: Copy README.md
-      run: cp README.md ./
-
-    - name: Copy application
-      copy:
-        from: task_manager/
-        to: ./task_manager/
-
-    - name: Install the project itself
-      run: poetry install --without dev --no-interaction --no-ansi
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
+    - name: Test Docker image
+      run: |
+        docker pull ${{ secrets.DOCKERHUB_USERNAME }}/task-manager:latest
+        docker run --rm ${{ secrets.DOCKERHUB_USERNAME }}/task-manager:latest list
